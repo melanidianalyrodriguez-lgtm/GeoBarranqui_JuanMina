@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoVisor Territorial Juan Mina</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="map"></div>
+
+  <section id="welcome-notice" class="welcome-guide" role="dialog" aria-modal="true" aria-labelledby="welcome-title" aria-describedby="welcome-intro" hidden>
+    <div class="welcome-card">
+      <button id="close-welcome-notice" class="welcome-close" type="button" aria-label="Cerrar bienvenida">×</button>
+      <span class="eyebrow">GeoVisor Territorial · Juan Mina</span>
+      <h2 id="welcome-title">¡Te damos la bienvenida!</h2>
+      <p id="welcome-intro" class="welcome-intro">Este espacio te permite explorar y analizar el territorio de Juan Mina, Barranquilla. Revisa el tutorial para aprender a usar sus herramientas.</p>
+      <div class="welcome-actions"><button id="skip-to-map" class="welcome-skip" type="button">Ir al mapa</button><button id="show-tutorial" class="welcome-submit" type="button">Iniciar recorrido <span aria-hidden="true">→</span></button></div>
+    </div>
+  </section>
+
+  <section id="functionality-notice" class="welcome-guide" role="dialog" aria-modal="true" aria-labelledby="tutorial-title" aria-describedby="tutorial-intro" hidden>
+    <div class="welcome-card">
+      <button id="close-functionality-notice" class="welcome-close" type="button" aria-label="Cerrar listado">×</button>
+      <span class="eyebrow">Manual · GeoVisor Juan Mina</span>
+      <h2 id="tutorial-title">Listado de funcionalidades</h2>
+      <p id="tutorial-intro" class="welcome-intro">Consulta para qué sirve cada herramienta. Si prefieres una explicación paso a paso, inicia el recorrido guiado.</p>
+      <div class="guide-content">
+        <section class="guide-section"><h3>Explorar el mapa</h3><ul>
+          <li><strong>Capas y mapas base:</strong> activa o desactiva límite, manzanas, usos del suelo, tratamientos y vías. Cambia entre imágenes satelitales y mapa de calles.</li>
+          <li><strong>Navegación:</strong> arrastra el mapa para desplazarte; usa la brújula para moverlo o volver al centro de Juan Mina, y el control deslizante o los botones para acercar y alejar.</li>
+          <li><strong>Escala y coordenadas:</strong> consulta la escala gráfica y mueve el cursor sobre el mapa para ver latitud y longitud.</li>
+          <li><strong>Divisor:</strong> compara los mapas base de imágenes y calles. Cambia la orientación entre vertical y horizontal con el botón que aparece sobre el mapa y arrastra el separador.</li>
+        </ul></section>
+        <section class="guide-section"><h3>Dibujar y medir</h3><ul>
+          <li><strong>Punto, línea y polígono:</strong> agrega elementos al mapa haciendo clic; termina una línea o polígono con doble clic.</li>
+          <li><strong>Medir:</strong> usa la herramienta de medición del mapa para calcular distancias y áreas.</li>
+          <li><strong>Estilo dibujo:</strong> selecciona un dibujo y personaliza color, grosor, patrón, relleno y tamaño de punto. También puedes eliminar el dibujo seleccionado.</li>
+        </ul></section>
+        <section class="guide-section"><h3>Analizar y compartir</h3><ul>
+          <li><strong>Herramientas GIS:</strong> selecciona una capa, ajusta color y transparencia, o clasifícala por un atributo.</li>
+          <li><strong>Etiquetas:</strong> elige un shapefile y etiqueta por campo o expresión. Ajusta fuente, tamaño y color del texto; cambia o quita el relleno y el contorno con sus colores y transparencias; define la posición para puntos, líneas y polígonos; filtra con clases y limita la visibilidad por escala. Usa “Mostrar etiquetas de esta capa” para activarlas o desactivarlas.</li>
+          <li><strong>Buffer e intersección:</strong> crea zonas alrededor de entidades indicando una distancia en metros, o encuentra el área común entre dos capas.</li>
+          <li><strong>Tabla:</strong> consulta atributos, filtra por campo y valor, selecciona resultados y acerca el mapa a ellos.</li>
+          <li><strong>Guardar imagen:</strong> exporta la vista actual como PNG o JPG y elige resolución; puedes añadir un título.</li>
+          <li><strong>Limpiar:</strong> quita dibujos, mediciones, resultados de análisis y selecciones que agregaste.</li>
+        </ul></section>
+      </div>
+      <div class="welcome-footer"><span>También puedes volver a este listado con el botón “Manual”.</span><div class="welcome-actions"><button id="start-guided-tour" class="welcome-submit" type="button">Iniciar recorrido</button><button id="start-exploring" class="welcome-skip" type="button">Cerrar</button></div></div>
+    </div>
+  </section>
+
+  <section id="guided-tour" class="welcome-guide" role="dialog" aria-modal="true" aria-labelledby="tour-step-title" aria-describedby="tour-step-description" hidden>
+    <div class="welcome-card tour-card">
+      <button id="close-guided-tour" class="welcome-close" type="button" aria-label="Cerrar recorrido">×</button>
+      <span class="eyebrow">Recorrido guiado · <span id="tour-step-count">Paso 1 de 9</span></span>
+      <div class="tour-step-icon" id="tour-step-icon" aria-hidden="true">▤</div>
+      <h2 id="tour-step-title">Capas y mapas base</h2>
+      <p id="tour-step-description" class="welcome-intro"></p>
+      <div class="tour-progress" aria-hidden="true"><span id="tour-progress-fill"></span></div>
+      <div class="tour-navigation"><button id="tour-back" class="welcome-skip" type="button">← Anterior</button><button id="tour-next" class="welcome-submit" type="button">Siguiente →</button></div>
+    </div>
+  </section>
+
+  <div class="map-overlay">
+    <div class="brand-card">
+      <div class="brand-mark">JM</div>
+      <div>
+        <h1>GeoVisor Juan Mina</h1>
+        <p>Territorio · Barranquilla</p>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button id="split-toggle" class="tool-btn" type="button">⫫ Divisor</button>
+      <button id="clear-drawings" class="tool-btn secondary" type="button" title="Quita todo lo que agregaste: dibujos, mediciones, resultados de buffer e intersección y selecciones">🗑 Limpiar</button>
+      <button id="attributes-toggle" class="tool-btn secondary" type="button">Tabla</button>
+      <button id="save-map" class="tool-btn secondary" type="button" aria-controls="map-export-panel" aria-expanded="false">Guardar imagen</button>
+      <button id="drawing-style-toggle" class="tool-btn secondary" type="button" aria-expanded="false">Estilo dibujo</button>
+      <button id="labels-toggle" class="tool-btn secondary" type="button" aria-controls="labels-panel" aria-expanded="false">Etiquetas</button>
+      <button id="open-welcome-guide" class="tool-btn secondary" type="button">Manual</button>
+    </div>
+
+    <section class="analysis-panel" aria-label="Herramientas GIS">
+      <h2>Herramientas GIS</h2>
+      <label>Capa vectorial <select id="vector-layer"><option value="">Detectar capas</option></select></label>
+      <label>Superponer con <select id="overlay-layer"><option value="">Misma capa</option></select></label>
+      <label>Color <input id="layer-color" type="color" value="#c96e57" /></label>
+      <label>Transparencia <input id="layer-opacity" type="range" min="0" max="100" value="55" /><output id="opacity-value">55%</output></label>
+      <label>Clasificar por <select id="class-field"><option value="">Sin clasificación</option></select></label>
+      <label>Buffer (metros) <input id="buffer-distance" type="number" min="1" value="100" /></label>
+      <div class="panel-actions"><button id="make-buffer" type="button">Crear buffer</button><button id="delete-buffer" type="button" disabled>Eliminar buffer</button><button id="overlay-intersection" type="button">Intersección</button></div>
+      <p id="tool-status" role="status">Carga una capa vectorial para habilitar análisis.</p>
+    </section>
+
+    <section id="attribute-table" class="attribute-table" aria-label="Tabla de atributos" hidden>
+      <div class="attribute-table-heading"><h2>Tabla de atributos</h2><button id="close-attribute-table" type="button" aria-label="Cerrar tabla">×</button></div>
+      <div class="table-tools">
+        <label>Campo <select id="attribute-field"><option value="">Selecciona campo</option></select></label>
+        <label>Condición <select id="attribute-match"><option value="contains">Contiene</option><option value="equals">Es igual a</option></select></label>
+        <label>Valor <input id="attribute-query" type="search" placeholder="Escribe un valor" /></label>
+        <div class="panel-actions"><button id="select-attribute" type="button">Seleccionar resultados</button><button id="zoom-selection" type="button">Acercar</button><button id="clear-selection" type="button">Quitar selección</button></div>
+      </div>
+      <div id="attribute-grid"></div>
+    </section>
+
+    <div class="drawing-toolbar" aria-label="Herramientas de dibujo">
+      <button class="draw-tool" data-draw="marker" type="button" title="Punto">● Punto</button>
+      <button class="draw-tool" data-draw="polyline" type="button" title="Línea">／ Línea</button>
+      <button class="draw-tool" data-draw="polygon" type="button" title="Polígono">▱ Polígono</button>
+    </div>
+  </div>
+
+  <section id="map-export-panel" class="map-export-panel" aria-label="Exportar imagen del mapa" hidden>
+    <div class="export-panel-heading"><div><span class="eyebrow">Exportación</span><h2>Guardar imagen</h2></div><button id="close-export-panel" type="button" aria-label="Cerrar exportación">×</button></div>
+    <label>Formato <select id="export-format"><option value="png">PNG</option><option value="jpeg">JPG</option></select></label>
+    <div class="export-size-fields"><label for="export-width">Ancho (px)</label><input id="export-width" type="number" min="100" max="12000" step="1" value="1600"><label for="export-height">Alto (px)</label><input id="export-height" type="number" min="100" max="12000" step="1" value="900"></div>
+    <p id="export-dimensions" class="export-dimensions" aria-live="polite"></p>
+    <p class="export-resolution-note">Escribe el ancho y el alto que deseas. La imagen se ajustará a esas dimensiones.</p>
+    <label id="export-quality-row" class="export-quality-row" hidden>Calidad JPG <input id="export-quality" type="range" min="50" max="100" value="92"><output id="export-quality-value">92%</output></label>
+    <label>Nombre del archivo <input id="export-filename" type="text" value="geovisor-juan-mina" maxlength="80"></label>
+    <label class="export-title-toggle"><input id="export-title-enabled" type="checkbox"> Incluir título en el mapa</label>
+    <label id="export-title-row" hidden>Título <input id="export-title" type="text" value="GeoVisor Juan Mina" maxlength="80"></label>
+    <p id="export-status" role="status">Se exportará la vista actual del mapa.</p>
+    <button id="export-image" class="export-submit" type="button">Descargar imagen</button>
+  </section>
+
+  <section id="drawing-style-panel" class="drawing-style-panel" aria-label="Estilo del dibujo" hidden>
+    <div class="style-panel-heading"><div><span class="eyebrow">Edición del dibujo</span><h2 id="style-feature-name">Selecciona un dibujo</h2></div><button id="close-style-panel" type="button" aria-label="Cerrar panel">×</button></div>
+    <label>Aplicar estilo a <select id="drawing-style-target"><option value="drawing">Dibujo seleccionado</option></select></label>
+    <p class="style-target-help">El estilo se aplica a todas las entidades de la capa elegida.</p>
+    <label>Color de línea <input id="drawing-stroke-color" type="color" value="#5f1f2d"></label>
+    <label>Grosor <input id="drawing-stroke-width" type="range" min="1" max="12" value="3"><output id="stroke-width-value">3 px</output></label>
+    <label>Estilo de línea <select id="drawing-line-pattern"><option value="solid">Continua</option><option value="dash">Discontinua</option><option value="dot">Punteada</option><option value="dashdot">Línea y punto</option></select></label>
+    <div class="style-fill-options">
+      <label class="fill-toggle"><input id="drawing-fill-enabled" type="checkbox" checked> Relleno de polígonos y puntos</label>
+      <label>Color de relleno <input id="drawing-fill-color" type="color" value="#c96e57"></label>
+      <label>Opacidad <input id="drawing-fill-opacity" type="range" min="0" max="100" value="28"><output id="fill-opacity-value">28%</output></label>
+      <label>Patrón de relleno <select id="drawing-fill-pattern"><option value="solid">Sólido</option><option value="hatch">Líneas diagonales</option><option value="cross">Trama cruzada</option><option value="dots">Puntos</option><option value="horizontal">Líneas horizontales</option><option value="vertical">Líneas verticales</option><option value="dash">Líneas discontinuas</option><option value="dotdash">Punto y raya</option><option value="none">Sin relleno</option></select></label>
+    </div>
+    <label class="point-size-row">Tamaño del punto <input id="drawing-point-size" type="range" min="3" max="24" value="8"><output id="point-size-value">8 px</output></label>
+    <p id="drawing-style-status" role="status">Dibuja o haz clic en un elemento para cambiar su estilo.</p>
+    <div class="panel-actions"><button id="delete-selected-drawing" type="button">Eliminar este dibujo</button></div>
+  </section>
+
+  <section id="labels-panel" class="labels-panel" aria-label="Configuración de etiquetas" hidden>
+    <div class="labels-panel-heading"><div><span class="eyebrow">Etiquetado cartográfico</span><h2>Etiquetas de capas</h2></div><button id="close-labels-panel" type="button" aria-label="Cerrar etiquetas">×</button></div>
+    <label>Capa shapefile <select id="label-layer"><option value="">Carga una capa vectorial</option></select></label>
+    <label class="label-enabled-row"><input id="labels-enabled" type="checkbox"> Mostrar etiquetas de esta capa</label>
+    <p class="label-help">Selecciona una capa y un campo o expresión. El estilo de relleno y contorno se actualiza al cambiar sus controles; pulsa “Aplicar etiquetas” para aplicar el resto de ajustes. Si la capa está apagada, se activará al mostrar las etiquetas.</p>
+    <label>Etiquetar con <select id="label-source"><option value="field">Un campo</option><option value="expression">Expresión</option></select></label>
+    <label id="label-field-row">Campo de etiqueta <select id="label-field"><option value="">Selecciona un campo</option></select></label>
+    <div id="label-expression-section" class="label-expression-section" hidden>
+      <label>Lenguaje <select id="label-expression-language"><option value="python">Expresión estilo Python</option><option value="vbscript">Expresión estilo VBScript</option></select></label>
+      <label>Expresión <textarea id="label-expression" rows="3" spellcheck="false" placeholder='str(properties["nombre"]) + " - " + str(properties["sector"])'></textarea></label>
+      <p class="label-help">Combina texto y campos: Python <code>str(properties["nombre"]) + " - " + str(properties["sector"])</code> · VBScript <code>CStr([nombre]) &amp; " - " &amp; CStr([sector])</code>. También se admite UCase/LCase. No se ejecuta código arbitrario.</p>
+    </div>
+    <div class="label-settings-grid">
+      <label>Fuente <select id="label-font"><option value="Segoe UI">Segoe UI</option><option value="Arial">Arial</option><option value="Tahoma">Tahoma</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="monospace">Monoespaciada</option></select></label>
+      <label>Tamaño <span class="label-range"><input id="label-size" type="range" min="8" max="28" value="12"><output id="label-size-value">12 px</output></span></label>
+      <label>Color <input id="label-color" type="color" value="#2d0f1d"></label>
+    </div>
+    <fieldset class="label-outline-settings"><legend>Relleno de la etiqueta</legend>
+      <label class="label-enabled-row"><input id="label-fill-enabled" type="checkbox" checked> Mostrar relleno</label>
+      <div class="label-outline-grid"><label>Color <input id="label-fill-color" type="color" value="#fffaf5"></label><label>Transparencia <span class="label-range"><input id="label-fill-opacity" type="range" min="0" max="100" value="92"><output id="label-fill-opacity-value">92%</output></span></label></div>
+    </fieldset>
+    <fieldset class="label-outline-settings"><legend>Contorno de la etiqueta</legend>
+      <label class="label-enabled-row"><input id="label-outline-enabled" type="checkbox" checked> Mostrar contorno</label>
+      <div class="label-outline-grid"><label>Color <input id="label-outline-color" type="color" value="#2d0f1d"></label><label>Transparencia <span class="label-range"><input id="label-outline-opacity" type="range" min="0" max="100" value="35"><output id="label-outline-opacity-value">35%</output></span></label></div>
+    </fieldset>
+    <fieldset class="label-placements"><legend>Posición respecto a la entidad</legend>
+      <label>Puntos <select id="label-position-point"><option value="auto">Automática</option><option value="top">Arriba</option><option value="right">Derecha</option><option value="bottom">Abajo</option><option value="left">Izquierda</option><option value="center">Centro</option></select></label>
+      <label>Líneas <select id="label-position-line"><option value="center">Centro</option><option value="auto">Automática</option><option value="top">Arriba</option><option value="right">Derecha</option><option value="bottom">Abajo</option><option value="left">Izquierda</option></select></label>
+      <label>Polígonos <select id="label-position-polygon"><option value="center">Centro</option><option value="auto">Automática</option><option value="top">Arriba</option><option value="right">Derecha</option><option value="bottom">Abajo</option><option value="left">Izquierda</option></select></label>
+    </fieldset>
+    <fieldset class="label-class-settings"><legend>Clases de etiqueta y filtros</legend>
+      <div class="label-class-actions"><label>Clase <select id="label-class-select"></select></label><button id="add-label-class" type="button">+ Clase</button><button id="remove-label-class" type="button">−</button></div>
+      <label>Nombre de clase <input id="label-class-name" type="text" value="General" maxlength="40"></label>
+      <label>Filtrar por <select id="label-filter-field"><option value="">Sin filtro</option></select></label>
+      <div class="label-filter-row"><select id="label-filter-operator" aria-label="Operador del filtro"><option value="equals">Es igual a</option><option value="contains">Contiene</option><option value="starts">Empieza por</option><option value="gt">Mayor que</option><option value="lt">Menor que</option><option value="not-empty">No está vacío</option></select><input id="label-filter-value" type="text" placeholder="Valor del filtro" aria-label="Valor del filtro"></div>
+      <p class="label-help">Puedes crear varias clases; se etiquetan las entidades que cumplan al menos uno de sus filtros.</p>
+    </fieldset>
+    <fieldset class="label-scale-settings"><legend>Rango de escala visible</legend>
+      <label>Más detallada · 1:<input id="label-scale-min" type="number" min="0" step="1000" value="0"></label>
+      <label>Menos detallada · 1:<input id="label-scale-max" type="number" min="1" step="10000" value="1000000000"></label>
+      <p class="label-help">Las etiquetas aparecen entre ambos denominadores. Deja 0 y 1.000.000.000 para mostrarlas en cualquier escala.</p>
+    </fieldset>
+    <p id="labels-status" role="status">Selecciona una capa shapefile para configurar sus etiquetas.</p>
+    <button id="apply-labels" class="labels-apply" type="button">Aplicar etiquetas</button>
+  </section>
+
+  <button id="dashboard-toggle" class="dashboard-toggle" type="button" aria-label="Ocultar capas y panel del proyecto" aria-controls="project-dashboard" aria-expanded="true" title="Ocultar capas y panel del proyecto">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></svg>
+  </button>
+  <aside id="project-dashboard" class="dashboard" aria-label="Resumen del geovisor">
+    <div class="dashboard-heading">
+      <div>
+        <span class="eyebrow">Panel del proyecto</span>
+        <h2>Territorio Juan Mina</h2>
+      </div>
+      <span class="status-pill"><i></i><span id="layer-status">Cargando capas…</span></span>
+    </div>
+    <p class="dashboard-intro">Corregimiento Juan Mina · Barranquilla</p>
+
+    <section class="dashboard-section dashboard-layers">
+      <h3>Capas y mapas base</h3>
+      <div id="dashboard-layer-control"></div>
+    </section>
+
+    <div class="dashboard-stats">
+      <article class="stat-card"><span class="stat-icon">▤</span><strong id="shapefile-count">0</strong><span>Capas territoriales</span></article>
+      <article class="stat-card"><span class="stat-icon">✎</span><strong id="drawing-count">0</strong><span>Dibujos creados</span></article>
+    </div>
+
+    <section class="dashboard-section tools-summary">
+      <h3>Herramientas disponibles</h3>
+      <p>Dibujo de puntos, líneas y polígonos</p>
+      <p>Medición de distancias y áreas</p>
+      <p>Comparación de mapas con divisor</p>
+    </section>
+    <p class="dashboard-foot">Activa o desactiva las capas desde este panel.</p>
+  </aside>
+
+  <script src="https://unpkg.com/shpjs@6.2.0/dist/shp.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.min.js"></script>
+  <script src="https://unpkg.com/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
+  <script src="https://unpkg.com/georaster-layer-for-leaflet@3.10.0/dist/georaster-layer-for-leaflet.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
+  <script src="scripts.js"></script>
+</body>
+</html>

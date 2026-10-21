@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Prueba visual</title></head>
+<body style="margin:0;background:#222;color:white;font:16px sans-serif">
+<pre id="result">Iniciando comprobación…</pre>
+<iframe id="app" src="/index.html" style="position:fixed;inset:45px 0 0;width:100%;height:calc(100% - 45px);border:0"></iframe>
+<script>
+var output = document.getElementById('result');
+var frame = document.getElementById('app');
+var checks = [];
+frame.addEventListener('load', function () {
+  var app = frame.contentWindow;
+  var tries = 0;
+  var wait = setInterval(function () {
+    tries++;
+    if (!app.map || !app.map._loaded || !app.document.getElementById('export-image')) {
+      if (tries > 60) { clearInterval(wait); output.textContent = 'FALLO: el geovisor no terminó de cargar.'; }
+      return;
+    }
+    clearInterval(wait);
+    try {
+      app.map.setZoom(2);
+      checks.push('zoom_minimo=' + app.map.getZoom());
+      var openButton = app.document.getElementById('save-map');
+      openButton.click();
+      checks.push('panel_exportacion=' + (!app.document.getElementById('map-export-panel').hidden));
+      app.document.getElementById('export-format').value = 'jpeg';
+      app.document.getElementById('export-format').dispatchEvent(new Event('change', { bubbles: true }));
+      checks.push('jpg_calidad_visible=' + (!app.document.getElementById('export-quality-row').hidden));
+      app.document.getElementById('export-title-enabled').click();
+      app.HTMLAnchorElement.prototype.click = function () { checks.push('archivo=' + this.download); checks.push('data_url=' + this.href.slice(0, 24)); };
+      app.document.getElementById('export-image').click();
+      var done = setInterval(function () {
+        var status = app.document.getElementById('export-status').textContent;
+        if (/descargada|No se pudo|bloqueó|Error|Capturando/.test(status) && !status.startsWith('Capturando')) {
+          clearInterval(done); checks.push('estado=' + status); output.textContent = checks.join('\n');
+        }
+      }, 250);
+      setTimeout(function () { clearInterval(done); if (output.textContent.startsWith('Iniciando')) { checks.push('estado=tiempo agotado'); output.textContent = checks.join('\n'); } }, 20000);
+    } catch (e) { output.textContent = 'FALLO: ' + e.stack; }
+  }, 250);
+});
+</script></body></html>
